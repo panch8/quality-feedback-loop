@@ -4,11 +4,15 @@
   "description": "Shareable quality enforcement configs for TypeScript/React/Node projects",
   "license": "MIT",
   "main": "prettier/index.js",
+  "bin": {
+    "q-feedback-init": "./scripts/init.js"
+  },
   "files": [
     "eslint/",
     "prettier/",
     "tsconfig/",
-    "lint-staged/"
+    "lint-staged/",
+    "scripts/"
   ],
   "exports": {
     "./eslint/base": "./eslint/base.js",
@@ -31,7 +35,13 @@
     "eslint-plugin-react-hooks": ">=5",
     "eslint-plugin-react-refresh": ">=0.4",
     "globals": ">=16",
+    "husky": ">=9",
     "prettier": ">=3",
     "typescript-eslint": ">=8"
+  },
+  "peerDependenciesMeta": {
+    "husky": { "optional": true },
+    "eslint-plugin-react-hooks": { "optional": true },
+    "eslint-plugin-react-refresh": { "optional": true }
   }
 }
