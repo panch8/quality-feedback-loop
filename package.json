@@ -26,7 +26,8 @@
     "./lint-staged/backend": "./lint-staged/backend.js"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "peerDependencies": {
     "@eslint/js": ">=9",

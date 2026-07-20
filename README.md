@@ -8,11 +8,6 @@ A single source of truth for ESLint, Prettier, TypeScript, and lint-staged — i
 
 ## Quick start
 
-```
-# .npmrc in consuming repo
-@panch8:registry=https://npm.pkg.github.com
-```
-
 ```sh
 npm install --save-dev @panch8/quality-feedback-loop husky
 npx q-feedback-init
@@ -62,14 +57,7 @@ All done. Make a commit to see the hook fire.
 
 ## Install
 
-This package is published to GitHub Packages. Add a one-line `.npmrc` to your consuming repo:
-
-```
-# .npmrc
-@panch8:registry=https://npm.pkg.github.com
-```
-
-Then install the package and the peer dependencies your project uses:
+Install the package and the peer dependencies your project uses:
 
 ```sh
 # All projects
