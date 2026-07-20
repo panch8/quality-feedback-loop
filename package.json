@@ -1,5 +1,5 @@
 {
-  "name": "@panch8/quality-feedback-loop",
+  "name": "@superpanch/quality-feedback-loop",
   "version": "0.1.0",
   "description": "Shareable quality enforcement configs for TypeScript/React/Node projects",
   "license": "MIT",

@@ -24,7 +24,7 @@ async function writeWithConfirm(filePath, content) {
 }
 
 async function main() {
-  console.log("\n@panch8/quality-feedback-loop — project setup\n");
+  console.log("\n@superpanch/quality-feedback-loop — project setup\n");
 
   // Auto-detect ESM
   let isEsm = false;
@@ -48,17 +48,17 @@ async function main() {
   const eslintPreset = isReact ? "react" : "node";
   await writeWithConfirm(
     "eslint.config.mjs",
-    `import ${eslintPreset} from "@panch8/quality-feedback-loop/eslint/${eslintPreset}";\nexport default ${eslintPreset};\n`,
+    `import ${eslintPreset} from "@superpanch/quality-feedback-loop/eslint/${eslintPreset}";\nexport default ${eslintPreset};\n`,
   );
 
   // .prettierrc
-  await writeWithConfirm(".prettierrc", `"@panch8/quality-feedback-loop/prettier"\n`);
+  await writeWithConfirm(".prettierrc", `"@superpanch/quality-feedback-loop/prettier"\n`);
 
   // tsconfig.json
   const tscPreset = isReact ? "app" : "node";
   await writeWithConfirm(
     "tsconfig.json",
-    JSON.stringify({ extends: `@panch8/quality-feedback-loop/tsconfig/${tscPreset}` }, null, 2) + "\n",
+    JSON.stringify({ extends: `@superpanch/quality-feedback-loop/tsconfig/${tscPreset}` }, null, 2) + "\n",
   );
 
   // lint-staged — .cjs when consuming repo is ESM, .js otherwise
@@ -66,7 +66,7 @@ async function main() {
   const lsFile = isEsm ? ".lintstagedrc.cjs" : ".lintstagedrc.js";
   await writeWithConfirm(
     lsFile,
-    `module.exports = require("@panch8/quality-feedback-loop/lint-staged/${lsPreset}");\n`,
+    `module.exports = require("@superpanch/quality-feedback-loop/lint-staged/${lsPreset}");\n`,
   );
 
   // Husky

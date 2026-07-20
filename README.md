@@ -1,4 +1,4 @@
-# @panch8/quality-feedback-loop
+# @superpanch/quality-feedback-loop
 
 Shareable quality enforcement configs for TypeScript/React/Node projects.
 
@@ -9,14 +9,14 @@ A single source of truth for ESLint, Prettier, TypeScript, and lint-staged — i
 ## Quick start
 
 ```sh
-npm install --save-dev @panch8/quality-feedback-loop husky
+npm install --save-dev @superpanch/quality-feedback-loop husky
 npx q-feedback-init
 ```
 
 The init command asks one question (React or Node), detects your module format, and writes all config files + a Husky pre-commit hook.
 
 ```
-@panch8/quality-feedback-loop — project setup
+@superpanch/quality-feedback-loop — project setup
 
   1  React (frontend)
   2  Node (backend)
@@ -61,7 +61,7 @@ Install the package and the peer dependencies your project uses:
 
 ```sh
 # All projects
-npm install --save-dev @panch8/quality-feedback-loop \
+npm install --save-dev @superpanch/quality-feedback-loop \
   eslint prettier typescript-eslint @eslint/js globals eslint-config-prettier
 
 # React projects also need:
@@ -79,13 +79,13 @@ npm install --save-dev husky
 
 **React** (`eslint.config.mjs`):
 ```js
-import react from "@panch8/quality-feedback-loop/eslint/react";
+import react from "@superpanch/quality-feedback-loop/eslint/react";
 export default react;
 ```
 
 **Node** (`eslint.config.mjs`):
 ```js
-import node from "@panch8/quality-feedback-loop/eslint/node";
+import node from "@superpanch/quality-feedback-loop/eslint/node";
 export default node;
 ```
 
@@ -93,7 +93,7 @@ export default node;
 
 **`.prettierrc`:**
 ```json
-"@panch8/quality-feedback-loop/prettier"
+"@superpanch/quality-feedback-loop/prettier"
 ```
 
 Config: `semi: true`, `singleQuote: false`, `tabWidth: 2`, `trailingComma: "all"`, `printWidth: 150`.
@@ -102,12 +102,12 @@ Config: `semi: true`, `singleQuote: false`, `tabWidth: 2`, `trailingComma: "all"
 
 **`tsconfig.json`** (React/Vite):
 ```json
-{ "extends": "@panch8/quality-feedback-loop/tsconfig/app" }
+{ "extends": "@superpanch/quality-feedback-loop/tsconfig/app" }
 ```
 
 **`tsconfig.json`** (Node):
 ```json
-{ "extends": "@panch8/quality-feedback-loop/tsconfig/node" }
+{ "extends": "@superpanch/quality-feedback-loop/tsconfig/node" }
 ```
 
 ### lint-staged + Husky
@@ -120,12 +120,12 @@ echo "npx lint-staged" > .husky/pre-commit
 
 **Frontend** — if `package.json` has `"type": "module"`, use `.lintstagedrc.cjs`:
 ```js
-module.exports = require("@panch8/quality-feedback-loop/lint-staged/frontend");
+module.exports = require("@superpanch/quality-feedback-loop/lint-staged/frontend");
 ```
 
 **Backend / plain CJS** — use `.lintstagedrc.js`:
 ```js
-module.exports = require("@panch8/quality-feedback-loop/lint-staged/backend");
+module.exports = require("@superpanch/quality-feedback-loop/lint-staged/backend");
 ```
 
 ---
