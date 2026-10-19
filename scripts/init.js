@@ -73,7 +73,7 @@ async function main() {
   console.log("\nInitializing Husky…\n");
   try {
     execSync("npx husky init", { stdio: "inherit" });
-    await writeWithConfirm(".husky/pre-commit", "npx lint-staged\n");
+    await writeWithConfirm(".husky/pre-commit", "npx lint-staged\nnpx tsc -b\n");
   } catch {
     console.error("\n  Husky init failed — is husky installed? (npm i -D husky)");
   }

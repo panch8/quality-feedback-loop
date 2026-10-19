@@ -1,6 +1,6 @@
 {
   "name": "@superpanch/quality-feedback-loop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shareable quality enforcement configs for TypeScript/React/Node projects",
   "license": "MIT",
   "main": "prettier/index.js",
