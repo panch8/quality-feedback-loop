@@ -1,0 +1,14 @@
+{
+  "description": "Quality Feedback Loop git guardrails.",
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Bash",
+      "hooks": [{
+        "type": "command",
+        "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/git-guardrails.js\" --agent",
+        "timeout": 30,
+        "statusMessage": "Checking git guardrails"
+      }]
+    }]
+  }
+}
