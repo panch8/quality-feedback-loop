@@ -40,10 +40,10 @@ async function installHarness({ root = process.cwd(), yes = false, confirm = asy
     let content = "#!/bin/sh\n# QFL managed hook\n";
     if (hook === "pre-push") {
       content += 'qfl_input=$(cat)\nprintf "%s\\n" "$qfl_input" | node "$(git rev-parse --show-toplevel)/.husky/_qfl/git-guardrails.js" --pre-push "$@" || exit $?\n';
-      if (previous) content += 'printf "%s\\n" "$qfl_input" | sh "$(git rev-parse --show-toplevel)/' + saved + '" "$@"\n';
+      if (previous) content += 'printf "%s\\n" "$qfl_input" | ( . "$(git rev-parse --show-toplevel)/' + saved + '" )\n';
     } else {
       content += source("harness/husky/" + templateName);
-      if (previous) content += 'sh "$(git rev-parse --show-toplevel)/' + saved + '" "$@"\n';
+      if (previous) content += '. "$(git rev-parse --show-toplevel)/' + saved + '"\n';
     }
     // Already confirmed above; install without a second prompt.
     fs.mkdirSync(path.dirname(target), { recursive: true });

@@ -26,6 +26,14 @@ test("harness init works offline in ESM consumers and preserves existing hooks",
     git(["checkout", "-b", "main"], cwd);
     assert.notEqual(spawnSync("git", ["commit", "--allow-empty", "-m", "blocked"], { cwd }).status, 0);
     assert.equal(spawnSync("git", ["commit", "--allow-empty", "-m", "human"], { cwd, env: { ...process.env, QFL_ALLOW_PROTECTED_PUSH: "1" } }).status, 0);
+    const remote = path.join(cwd, "remote.git");
+    git(["init", "--bare", remote], cwd);
+    git(["remote", "add", "origin", remote], cwd);
+    const humanEnv = { ...process.env, QFL_ALLOW_PROTECTED_PUSH: "1" };
+    assert.equal(spawnSync("git", ["push", "origin", "main"], { cwd, env: humanEnv }).status, 0);
+    git(["-c", "core.hooksPath=/dev/null", "commit", "--allow-empty", "-m", "next"], cwd);
+    const forced = spawnSync("git", ["push", "--force", "origin", "main"], { cwd, env: humanEnv, encoding: "utf8" });
+    assert.notEqual(forced.status, 0, forced.stderr);
     const command = path.join(cwd, ".codex/hooks/git-guardrails.js");
     const result = spawnSync(process.execPath, [command, "--agent"], {
       cwd, input: JSON.stringify({ cwd, hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: { command: "git push origin main" } }),

@@ -26,6 +26,19 @@ function main() {
       return { remoteRef, delete: deletion, force };
     });
     reason = checkPush(updates);
+    // Git's stdin protocol omits force flags. Inspect the invoking Git process
+    // too, including fast-forward updates made with an explicit --force.
+    let pid = process.ppid;
+    for (let depth = 0; pid > 1 && depth < 8; depth++) {
+      const info = spawnSync("ps", ["-ww", "-o", "ppid=,args=", "-p", String(pid)], { encoding: "utf8" });
+      const match = info.stdout?.trim().match(/^(\d+)\s+([\s\S]*)$/);
+      if (!match) break;
+      if (/(?:^|\/)git\s+(?:[^;]*\s)?push(?:\s|$)/.test(match[2])) {
+        reason ||= checkCommand(match[2], { agent: false });
+        break;
+      }
+      pid = Number(match[1]);
+    }
   }
   if (reason) { console.error(reason); process.exitCode = 1; }
 }
