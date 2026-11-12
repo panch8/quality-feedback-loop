@@ -10,6 +10,9 @@ const valid = "## Summary\n\nChange\n\n## Evidence\n\n- **Before:** failed\n  **
 test("body validates canonical sections and fields", () => {
   assert.deepEqual(checkBody(valid), []);
   assert.deepEqual(checkBody(valid.replace("**Door:** two-way", "**Door:** two-way — cheap to roll back")), []);
+  const diagram = valid.replace("Change", "```text\ninit --harness\n```");
+  assert.deepEqual(checkBody(diagram), []);
+  assert.ok(checkBody("```markdown\n" + valid + "\n```").length);
   for (const body of ["This PR does X", valid.replace("**Door:** two-way", ""), valid.replace("**Blast Radius:** hooks", ""), valid.replace("**After:** passed", "")]) assert.ok(checkBody(body).length);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qfl-format-"));
   try {

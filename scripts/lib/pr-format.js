@@ -1,15 +1,32 @@
 const fs = require("fs");
 const path = require("path");
-function checkBody(body, formatPath) {
+
+function loadFormat(formatPath) {
   const file = formatPath || process.env.QFL_PR_FORMAT ||
     (fs.existsSync(".qfl/pr-format.json") ? ".qfl/pr-format.json" : path.join(__dirname, "../../harness/pr-format.json"));
-  const format = JSON.parse(fs.readFileSync(file, "utf8"));
-  // Ignore fenced code so a pasted template inside a code block is not a body.
-  const text = body.replace(/^```[^\n]*\n[\s\S]*?^```\s*$/gm, "");
-  const sections = [...text.matchAll(/^## ([^\n]+)\s*\n([\s\S]*?)(?=^#{1,2} |$(?![\s\S]))/gm)];
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+// Drop fenced blocks so a template pasted inside a code fence cannot satisfy headings.
+function unfenced(body) {
+  return body.replace(/^```[^\n]*\n[\s\S]*?^```\s*$/gm, "");
+}
+
+function sections(text) {
+  return [...text.matchAll(/^## ([^\n]+)\s*\n([\s\S]*?)(?=^#{1,2} |$(?![\s\S]))/gm)];
+}
+
+function checkBody(body, formatPath) {
+  const format = loadFormat(formatPath);
   const errors = [];
+  const headingSource = unfenced(body);
+  const parsed = sections(body);
   for (const rule of format.sections) {
-    const matches = sections.filter((s) => s[1].trim() === rule.heading);
+    if (!new RegExp("^## " + rule.heading + "\\s*$", "m").test(headingSource)) {
+      errors.push("Required section: " + rule.heading);
+      continue;
+    }
+    const matches = parsed.filter((s) => s[1].trim() === rule.heading);
     const content = matches[0]?.[2].trim();
     if (matches.length !== 1 || !content) { errors.push("Required section: " + rule.heading); continue; }
     for (const label of rule.labels || []) {
@@ -23,4 +40,5 @@ function checkBody(body, formatPath) {
   }
   return errors;
 }
+
 module.exports = { checkBody };
