@@ -1,0 +1,7 @@
+{
+  "sections": [
+    { "heading": "Summary" },
+    { "heading": "Evidence", "labels": ["Before", "After"] },
+    { "heading": "Merge Danger", "fields": { "Door": ["one-way", "two-way"], "Blast Radius": null } }
+  ]
+}

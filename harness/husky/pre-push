@@ -1,0 +1,1 @@
+node "$(git rev-parse --show-toplevel)/.husky/_qfl/git-guardrails.js" --pre-push "$@" || exit $?
