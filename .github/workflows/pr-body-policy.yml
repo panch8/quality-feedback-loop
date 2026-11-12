@@ -24,7 +24,6 @@ jobs:
         with:
           path: caller
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: ${{ endsWith(github.repository, '/quality-feedback-loop') && github.repository || inputs.policy_repository || 'panch8/quality-feedback-loop' }}

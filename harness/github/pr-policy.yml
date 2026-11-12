@@ -6,6 +6,8 @@ permissions:
   contents: read
 jobs:
   branch-graph:
+    name: PR branch graph
     uses: panch8/quality-feedback-loop/.github/workflows/pr-branch-policy.yml@main
   pr-body:
+    name: PR body (/pr format)
     uses: panch8/quality-feedback-loop/.github/workflows/pr-body-policy.yml@main

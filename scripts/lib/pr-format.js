@@ -16,8 +16,9 @@ function checkBody(body, formatPath) {
       if (!new RegExp("\\*\\*" + label + ":\\*\\*\\s*\\S").test(content)) errors.push("Missing label: " + label);
     }
     for (const [field, values] of Object.entries(rule.fields || {})) {
-      const value = content.match(new RegExp("\\*\\*" + field + ":\\*\\*[ \\t]*([^\\n]+)"))?.[1].trim();
-      if (!value || (values && !values.includes(value.toLowerCase()))) errors.push("Invalid field: " + field);
+      const raw = content.match(new RegExp("\\*\\*" + field + ":\\*\\*[ \\t]*([^\\n]+)"))?.[1].trim();
+      const value = values ? raw?.toLowerCase().match(/^\S+/)?.[0] : raw;
+      if (!raw || (values && !values.includes(value))) errors.push("Invalid field: " + field);
     }
   }
   return errors;

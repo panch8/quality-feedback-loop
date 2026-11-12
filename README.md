@@ -259,11 +259,16 @@ workflows use its current revision, so they also work before publication.
 The caller's .qfl/pr-format.json is honored. Pin the reusable workflow reference
 and policy_ref to matching immutable revisions when reproducibility is needed.
 
+The installed caller sets job `name`s to `PR branch graph` and
+`PR body (/pr format)` so they match the recommended required checks.
+
 `node scripts/apply-branch-protection.js --repo OWNER/REPO` **prints only**;
 --dry-run is the default. It emits gh api commands for main, staging, and test
-requiring PRs and the stable checks `PR branch graph` and
-`PR body (/pr format)`, with force pushes/deletions disabled and admin
-enforcement enabled. Fran approves these settings per repository. Review the
-printed commands and existing settings first; --apply is an explicit opt-in
-that replaces the branch protection configuration. The installer never applies
-settings, authenticates, publishes, or pushes.
+that require those two checks, disable force pushes and deletions, and leave
+`enforce_admins` off so the human override can still push. GitHub cannot tell
+the human from an agent using the same account; Codex and Husky hooks are the
+agent hard-block. Reviews are not required, so a solo maintainer can merge.
+Fran approves these settings per repository. Review the printed commands and
+existing settings first; --apply is an explicit opt-in that replaces the
+branch protection configuration. The installer never applies settings,
+authenticates, publishes, or pushes.

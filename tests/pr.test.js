@@ -9,6 +9,7 @@ const { git, reachable } = require("../scripts/lib/git");
 const valid = "## Summary\n\nChange\n\n## Evidence\n\n- **Before:** failed\n  **After:** passed\n\n## Merge Danger\n\n**Door:** two-way\n\n**Blast Radius:** hooks";
 test("body validates canonical sections and fields", () => {
   assert.deepEqual(checkBody(valid), []);
+  assert.deepEqual(checkBody(valid.replace("**Door:** two-way", "**Door:** two-way — cheap to roll back")), []);
   for (const body of ["This PR does X", valid.replace("**Door:** two-way", ""), valid.replace("**Blast Radius:** hooks", ""), valid.replace("**After:** passed", "")]) assert.ok(checkBody(body).length);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qfl-format-"));
   try {
