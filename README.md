@@ -144,3 +144,126 @@ git tag v0.1.0 && git push origin v0.1.0
 
 - **M1 (current)** — TypeScript/JS: ESLint, Prettier, TSConfig, lint-staged, Husky init CLI
 - **M2 (planned)** — Reusable GitHub Actions workflows for multi-language repos (Python/ruff/mypy, unified quality gates)
+
+## Harness
+
+Install the git, CI, and Codex harness without the React/Node quiz:
+
+```sh
+npx q-feedback-init --harness
+# Automation: skip overwrite confirmations
+npx q-feedback-init --harness --yes
+# Install quality configs as well:
+npx q-feedback-init --harness --type node --yes
+```
+
+Requires Node and a Git working tree. The installer adds AGENTS.md, Husky
+pre-commit/pre-push/commit-msg guardrails, .codex/hooks.json, local copies of
+the CommonJS hook code, and .github/workflows/pr-policy.yml. Existing hook
+commands and Codex hook entries are preserved. If no hook manager is configured,
+it wires core.hooksPath to .husky; an existing Husky .husky/_ path is retained.
+Custom hook managers need to invoke the installed .husky hooks.
+**Commit AGENTS.md; do not gitignore it.** Trust project hooks once via
+`/hooks` in Codex. The PreToolUse command resolves from the Git root, so it
+also works when Codex starts in a subdirectory.
+
+Develop features/fixes on any branch other than main, staging, or test.
+PR into test or staging first; after validation, promote that integration
+branch to main with a second PR. CI rejects all other combinations, including
+test → staging and staging → test. If the remote has neither integration branch,
+feature → main is allowed. When both exist, one tip must be an ancestor of the
+other; diverged integration histories fail.
+
+Use the /pr skill for the title and body. The body check requires:
+
+```markdown
+## Summary
+
+Change description or diagram.
+
+## Evidence
+
+- **Before:** failing behavior
+  **After:** passing behavior
+
+## Merge Danger
+
+**Door:** two-way
+
+**Blast Radius:** hooks
+```
+
+Door accepts one-way or two-way. Headings are case-sensitive. All body
+requirements come from **harness/pr-format.json**: when the /pr skill evolves,
+this is the only file to update. Consumers can override it with
+.qfl/pr-format.json or a QFL_PR_FORMAT path. No override file is copied by default,
+so consumers continue using the package/workflow format.
+
+For local checks in this package checkout:
+
+```sh
+node scripts/check-pr-body.js --body-file /path/to/pr-body.md
+node scripts/check-pr-policy.js --base staging --head feature/example
+# Offline/CI inputs: supplied refs mean existing integration branches;
+# omitted refs mean missing branches. Full history must be available.
+node scripts/check-pr-policy.js --base main --head test --refs-from-inputs --test-ref test --staging-ref staging
+npm test
+```
+
+The default graph CLI queries origin, fetches existing test/staging branches,
+and checks reachability. Remote errors fail rather than assuming branches are
+missing. The body CLI also accepts GITHUB_EVENT_PATH. These scripts require no
+installed dependencies.
+
+### Human override
+
+Direct commits and pushes to main, staging, and test are blocked by default.
+Only the human may explicitly authorize a direct **non-force** commit or push:
+
+```sh
+QFL_ALLOW_PROTECTED_PUSH=1 git commit -m "..."
+QFL_ALLOW_PROTECTED_PUSH=1 git push origin main
+```
+
+Husky honors this override; **Codex PreToolUse always ignores it**. It never
+authorizes force-push, deletion, or reset --hard of a protected branch.
+The pre-push hook checks ancestry and inspects the invoking Git process for
+explicit force flags (using ps where available). Codex blocks protected destructive
+commands before execution; Husky cannot intercept a standalone reset or branch
+deletion. Git hooks and Codex hooks are local guardrails, so also use server
+protection for remote enforcement. Co-Authored-By trailers are always rejected.
+
+### Reusable CI and branch protection
+
+The installed caller uses:
+
+```yaml
+name: PR policy
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+jobs:
+  branch-graph:
+    uses: panch8/quality-feedback-loop/.github/workflows/pr-branch-policy.yml@main
+  pr-body:
+    uses: panch8/quality-feedback-loop/.github/workflows/pr-body-policy.yml@main
+```
+
+These reusable workflows accept optional base/head or body inputs, falling back
+to the caller's pull_request event. They check out the caller and the policy
+source separately, with read-only permissions, and run the policy source scripts
+against the caller. No npm install is needed. The policy checkout defaults to
+panch8/quality-feedback-loop at main; policy_repository and policy_ref inputs
+can select an available revision before release. This repository's own direct PR
+workflows use its current revision, so they also work before publication.
+The caller's .qfl/pr-format.json is honored. Pin the reusable workflow reference
+and policy_ref to matching immutable revisions when reproducibility is needed.
+
+`node scripts/apply-branch-protection.js --repo OWNER/REPO` **prints only**;
+--dry-run is the default. It emits gh api commands for main, staging, and test
+requiring PRs and the stable checks `PR branch graph` and
+`PR body (/pr format)`, with force pushes/deletions disabled and admin
+enforcement enabled. Fran approves these settings per repository. Review the
+printed commands and existing settings first; --apply is an explicit opt-in
+that replaces the branch protection configuration. The installer never applies
+settings, authenticates, publishes, or pushes.
