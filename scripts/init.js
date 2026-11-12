@@ -5,6 +5,8 @@ const { existsSync, readFileSync, writeFileSync, mkdirSync } = require("fs");
 const { execSync } = require("child_process");
 const path = require("path");
 
+const args = process.argv.slice(2);
+const yes = args.includes("--yes") || args.includes("-y");
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 
 const ask = (q) => rl.question(q).then((a) => a.trim());
@@ -12,7 +14,7 @@ const confirm = async (q) => (await ask(`${q} (y/N) `)).toLowerCase() === "y";
 
 async function writeWithConfirm(filePath, content) {
   if (existsSync(filePath)) {
-    if (!(await confirm(`  ${filePath} already exists. Overwrite?`))) {
+    if (!yes && !(await confirm(`  ${filePath} already exists. Overwrite?`))) {
       console.log(`  – skipped ${filePath}`);
       return;
     }
@@ -26,6 +28,16 @@ async function writeWithConfirm(filePath, content) {
 async function main() {
   console.log("\n@superpanch/quality-feedback-loop — project setup\n");
 
+  const type = args.find((arg) => ["react", "node", "--react", "--node"].includes(arg)) ||
+    (args.includes("--type") ? args[args.indexOf("--type") + 1] : undefined);
+  const harness = args.includes("--harness");
+  const harnessOnly = harness && !type;
+  if (harnessOnly) {
+    await require("./install-harness").installHarness({ yes, confirm });
+    rl.close();
+    return;
+  }
+
   // Auto-detect ESM
   let isEsm = false;
   if (existsSync("package.json")) {
@@ -38,7 +50,7 @@ async function main() {
   // Project type
   console.log("  1  React (frontend)");
   console.log("  2  Node (backend)");
-  const choice = await ask("\nProject type [1/2]: ");
+  const choice = type ? (type.replace(/^--/, "") === "node" ? "2" : "1") : yes ? "1" : await ask("\nProject type [1/2]: ");
   const isReact = choice !== "2";
   const label = isReact ? "React" : "Node";
 
@@ -77,6 +89,8 @@ async function main() {
   } catch {
     console.error("\n  Husky init failed — is husky installed? (npm i -D husky)");
   }
+
+  if (harness) await require("./install-harness").installHarness({ yes, confirm });
 
   console.log("\nAll done. Make a commit to see the hook fire.\n");
   rl.close();
