@@ -1,0 +1,41 @@
+name: PR body (/pr format)
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  workflow_call:
+    inputs:
+      body:
+        type: string
+        default: ''
+      policy_repository:
+        type: string
+        default: panch8/quality-feedback-loop
+      policy_ref:
+        type: string
+        default: main
+permissions:
+  contents: read
+jobs:
+  policy:
+    name: PR body (/pr format)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: caller
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository == 'panch8/quality-feedback-loop' && github.repository || inputs.policy_repository || 'panch8/quality-feedback-loop' }}
+          ref: ${{ github.repository == 'panch8/quality-feedback-loop' && github.sha || inputs.policy_ref || 'main' }}
+          path: qfl-policy
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check /pr structure
+        env:
+          QFL_PR_BODY: ${{ inputs.body || github.event.pull_request.body }}
+        working-directory: caller
+        run: node ../qfl-policy/scripts/check-pr-body.js

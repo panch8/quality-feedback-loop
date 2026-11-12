@@ -1,0 +1,11 @@
+name: PR policy
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+jobs:
+  branch-graph:
+    uses: panch8/quality-feedback-loop/.github/workflows/pr-branch-policy.yml@main
+  pr-body:
+    uses: panch8/quality-feedback-loop/.github/workflows/pr-body-policy.yml@main
