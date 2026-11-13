@@ -1,0 +1,47 @@
+# REFERENCE ONLY — merge these pieces into your azure-pipelines.yaml.
+# Installed by q-feedback-init --versioning. Mode is picked from .qfl/versioning.json:
+# __RELEASE__ bumps and is tagged; __INHERIT__ report the highest reachable tag.
+
+trigger:
+  batch: true
+  branches:
+    include: [__BRANCHES__]
+
+# 1) Build stage: full history + tags, and stamp the BUILD COPY only.
+#    The step `name: version` publishes the output variable version.value.
+- stage: Build
+  jobs:
+    - job: BuildJob
+      steps:
+        - checkout: self
+          fetchDepth: 0
+          fetchTags: true
+        # ... install / build / copy into package/ ...
+        - script: |
+            VERSION=$(node .qfl/bin/qfl-version.js calculate __STAMP__) || exit 1
+            echo "Version: $VERSION"
+            echo "##vso[task.setvariable variable=value;isOutput=true]$VERSION"
+          name: version
+          displayName: "Stamp version"
+
+# 2) Tag stage: release branch only, after a successful deploy.
+#    Build Service needs "Create tag" and "Contribute to pull requests" (not "Contribute").
+- stage: Tag
+  dependsOn: [Build, Deploy]
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/__RELEASE__'))
+  jobs:
+    - job: TagJob
+      variables:
+        version: $[ stageDependencies.Build.BuildJob.outputs['version.value'] ]
+      steps:
+        - checkout: self
+          fetchDepth: 0
+          fetchTags: true
+          persistCredentials: true
+        - script: node .qfl/bin/qfl-version.js tag "$(version)" "$(Build.SourceVersion)"
+          displayName: "Tag v$(version)"
+        # Best effort: always exits 0.
+        - script: node .qfl/bin/qfl-version.js comment-released "v$(version)" --host=azure
+          displayName: "Comment released PRs"
+          env:
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)

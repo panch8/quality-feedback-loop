@@ -31,9 +31,15 @@ async function main() {
   const type = args.find((arg) => ["react", "node", "--react", "--node"].includes(arg)) ||
     (args.includes("--type") ? args[args.indexOf("--type") + 1] : undefined);
   const harness = args.includes("--harness");
-  const harnessOnly = harness && !type;
-  if (harnessOnly) {
-    await require("./install-harness").installHarness({ yes, confirm });
+  const versioning = args.includes("--versioning");
+  const value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
+  const versioningOptions = { host: value("--host"), releaseBranch: value("--release-branch"), helper: value("--helper"), spec: value("--spec") };
+  const extras = async () => {
+    if (harness) await require("./install-harness").installHarness({ yes, confirm });
+    if (versioning) await require("./install-versioning").installVersioning({ yes, ask, confirm, options: versioningOptions });
+  };
+  if ((harness || versioning) && !type) {
+    await extras();
     rl.close();
     return;
   }
@@ -90,7 +96,7 @@ async function main() {
     console.error("\n  Husky init failed — is husky installed? (npm i -D husky)");
   }
 
-  if (harness) await require("./install-harness").installHarness({ yes, confirm });
+  await extras();
 
   console.log("\nAll done. Make a commit to see the hook fire.\n");
   rl.close();

@@ -1,0 +1,10 @@
+name: PR title
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+jobs:
+  pr-title:
+    name: PR title (conventional)
+    uses: panch8/quality-feedback-loop/.github/workflows/pr-title-policy.yml@main
