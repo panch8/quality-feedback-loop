@@ -5,7 +5,8 @@
   "license": "MIT",
   "main": "prettier/index.js",
   "bin": {
-    "q-feedback-init": "scripts/init.js"
+    "q-feedback-init": "scripts/init.js",
+    "qfl-version": "scripts/qfl-version.js"
   },
   "files": [
     "eslint/",
