@@ -1,8 +1,10 @@
 # @superpanch/quality-feedback-loop
 
-Shareable quality enforcement configs for TypeScript/React/Node projects.
+Shared quality setup for TypeScript, React and Node projects. Install it once and every repo gets:
 
-A single source of truth for ESLint, Prettier, TypeScript, and lint-staged — install once, stay consistent across every repo.
+- **Configs:** ESLint, Prettier, TypeScript and lint-staged, with a pre-commit hook.
+- **Harness** (optional): git guardrails, a PR branch policy and a PR description check.
+- **Versioning** (optional): version numbers assigned by CI from PR titles, never edited by hand.
 
 ---
 
@@ -13,7 +15,7 @@ npm install --save-dev @superpanch/quality-feedback-loop husky
 npx q-feedback-init
 ```
 
-The init command asks one question (React or Node), detects your module format, and writes all config files + a Husky pre-commit hook.
+The setup asks one question (React or Node), detects your module format, and writes the config files and a Husky pre-commit hook:
 
 ```
 @superpanch/quality-feedback-loop — project setup
@@ -43,47 +45,51 @@ All done. Make a commit to see the hook fire.
 
 | Entry point | What it does |
 |---|---|
-| `…/eslint/base` | TypeScript strict + prettier disabled, no env assumptions |
-| `…/eslint/react` | base + react-hooks + react-refresh |
-| `…/eslint/node` | base + node globals |
-| `…/prettier` | Prettier config object |
-| `…/tsconfig/base` | Strict TS, no emit, no env assumptions |
-| `…/tsconfig/app` | base + browser/bundler mode (Vite/React) |
+| `…/eslint/base` | Strict TypeScript rules, Prettier-compatible, no environment assumptions |
+| `…/eslint/react` | base + React Hooks + React Refresh |
+| `…/eslint/node` | base + Node globals |
+| `…/prettier` | Prettier config |
+| `…/tsconfig/base` | Strict TypeScript, no emit, no environment assumptions |
+| `…/tsconfig/app` | base + browser/bundler mode (Vite, React) |
 | `…/tsconfig/node` | base + Node16 module resolution |
-| `…/lint-staged/frontend` | prettier + eslint + tsc on staged TS files |
-| `…/lint-staged/backend` | prettier + eslint on staged TS files |
+| `…/lint-staged/frontend` | Prettier + ESLint + `tsc` on staged TS files |
+| `…/lint-staged/backend` | Prettier + ESLint on staged TS files |
 
 ---
 
 ## Install
 
-Install the package and the peer dependencies your project uses:
+Install the package plus the peer dependencies your project uses:
 
 ```sh
 # All projects
 npm install --save-dev @superpanch/quality-feedback-loop \
   eslint prettier typescript-eslint @eslint/js globals eslint-config-prettier
 
-# React projects also need:
+# React projects also need
 npm install --save-dev eslint-plugin-react-hooks eslint-plugin-react-refresh
 
-# For Husky / pre-commit hooks:
+# Pre-commit hooks
 npm install --save-dev husky
 ```
 
 ---
 
-## Manual config (skip the init script)
+## Manual config
+
+Skip `q-feedback-init` and wire things up yourself.
 
 ### ESLint
 
-**React** (`eslint.config.mjs`):
+React (`eslint.config.mjs`):
+
 ```js
 import react from "@superpanch/quality-feedback-loop/eslint/react";
 export default react;
 ```
 
-**Node** (`eslint.config.mjs`):
+Node (`eslint.config.mjs`):
+
 ```js
 import node from "@superpanch/quality-feedback-loop/eslint/node";
 export default node;
@@ -91,90 +97,90 @@ export default node;
 
 ### Prettier
 
-**`.prettierrc`:**
+`.prettierrc`:
+
 ```json
 "@superpanch/quality-feedback-loop/prettier"
 ```
 
-Config: `semi: true`, `singleQuote: false`, `tabWidth: 2`, `trailingComma: "all"`, `printWidth: 150`.
+Settings: `semi: true`, `singleQuote: false`, `tabWidth: 2`, `trailingComma: "all"`, `printWidth: 150`.
 
 ### TypeScript
 
-**`tsconfig.json`** (React/Vite):
+React / Vite (`tsconfig.json`):
+
 ```json
 { "extends": "@superpanch/quality-feedback-loop/tsconfig/app" }
 ```
 
-**`tsconfig.json`** (Node):
+Node (`tsconfig.json`):
+
 ```json
 { "extends": "@superpanch/quality-feedback-loop/tsconfig/node" }
 ```
 
 ### lint-staged + Husky
 
-Run once to wire up the pre-commit hook:
+Set up the pre-commit hook once:
+
 ```sh
 npx husky init
 echo "npx lint-staged" > .husky/pre-commit
 ```
 
-**Frontend** — if `package.json` has `"type": "module"`, use `.lintstagedrc.cjs`:
+Frontend. If `package.json` has `"type": "module"`, name the file `.lintstagedrc.cjs`:
+
 ```js
 module.exports = require("@superpanch/quality-feedback-loop/lint-staged/frontend");
 ```
 
-**Backend / plain CJS** — use `.lintstagedrc.js`:
+Backend or plain CommonJS (`.lintstagedrc.js`):
+
 ```js
 module.exports = require("@superpanch/quality-feedback-loop/lint-staged/backend");
 ```
 
 ---
 
-## Publishing
-
-Releases are published to GitHub Packages automatically when a `v*` tag is pushed:
-
-```sh
-git tag v0.1.0 && git push origin v0.1.0
-```
-
----
-
-## Roadmap
-
-- **M1 (current)** — TypeScript/JS: ESLint, Prettier, TSConfig, lint-staged, Husky init CLI
-- **M2 (planned)** — Reusable GitHub Actions workflows for multi-language repos (Python/ruff/mypy, unified quality gates)
-
 ## Harness
 
-Install the git, CI, and Codex harness without the React/Node quiz:
+The harness keeps changes flowing through PRs in a fixed order and keeps PR descriptions consistent. It is built for teams where AI coding agents (Claude Code, Codex) commit alongside humans.
 
 ```sh
-npx q-feedback-init --harness
-# Automation: skip overwrite confirmations
-npx q-feedback-init --harness --yes
-# Install quality configs as well:
-npx q-feedback-init --harness --type node --yes
+npx q-feedback-init --harness                    # harness only
+npx q-feedback-init --harness --yes              # don't ask before overwriting files
+npx q-feedback-init --harness --type node --yes  # harness + Node configs
 ```
 
-Requires Node and a Git working tree. The installer adds AGENTS.md, Husky
-pre-commit/pre-push/commit-msg guardrails, .codex/hooks.json, local copies of
-the CommonJS hook code, and .github/workflows/pr-policy.yml. Existing hook
-commands and Codex hook entries are preserved. If no hook manager is configured,
-it wires core.hooksPath to .husky; an existing Husky .husky/_ path is retained.
-Custom hook managers need to invoke the installed .husky hooks.
-**Commit AGENTS.md; do not gitignore it.** Trust project hooks once via
-`/hooks` in Codex. The PreToolUse command resolves from the Git root, so it
-also works when Codex starts in a subdirectory.
+Requires Node and a git repository.
 
-Develop features/fixes on any branch other than main, staging, or test.
-PR into test or staging first; after validation, promote that integration
-branch to main with a second PR. CI rejects all other combinations, including
-test → staging and staging → test. If the remote has neither integration branch,
-feature → main is allowed. When both exist, one tip must be an ancestor of the
-other; diverged integration histories fail.
+### What it installs
 
-Use the /pr skill for the title and body. The body check requires:
+| File | Purpose |
+|---|---|
+| `AGENTS.md` | Rules for AI agents working in the repo. **Commit it; don't gitignore it.** |
+| `.husky/pre-commit`, `pre-push`, `commit-msg` | Local git guardrails (see below) |
+| `.codex/hooks.json` | The same guardrails for Codex. Approve them once with `/hooks` in Codex. |
+| `.github/workflows/pr-policy.yml` | PR checks: branch order and PR description |
+
+Your existing hooks are kept. If you have no hook manager, git is pointed at `.husky/`. If you use a different hook manager, have it call the `.husky/` hooks.
+
+### Branch flow
+
+`main`, `staging` and `test` are protected. Work happens on other branches:
+
+```text
+feature/fix branch ──PR──► test or staging ──PR──► main
+```
+
+- Feature and fix PRs go into `test` or `staging` first. After you've validated them there, promote that branch to `main` with a second PR.
+- Every other combination fails CI, including `test` → `staging`.
+- If the repo has neither `test` nor `staging`, feature → `main` is allowed.
+- If both exist, one must contain the other's history. Diverged histories fail.
+
+### PR description
+
+The PR check requires this structure. The `/pr` skill writes it for you:
 
 ```markdown
 ## Summary
@@ -193,49 +199,28 @@ Change description or diagram.
 **Blast Radius:** hooks
 ```
 
-Door accepts one-way or two-way. Headings are case-sensitive. All body
-requirements come from **harness/pr-format.json**: when the /pr skill evolves,
-this is the only file to update. Consumers can override it with
-.qfl/pr-format.json or a QFL_PR_FORMAT path. No override file is copied by default,
-so consumers continue using the package/workflow format.
+`Door` is `one-way` or `two-way`. Headings and labels are case-sensitive.
 
-For local checks in this package checkout:
+The rules live in `harness/pr-format.json`. To use your own, add `.qfl/pr-format.json` to your repo or point `QFL_PR_FORMAT` at a file.
 
-```sh
-node scripts/check-pr-body.js --body-file /path/to/pr-body.md
-node scripts/check-pr-policy.js --base staging --head feature/example
-# Offline/CI inputs: supplied refs mean existing integration branches;
-# omitted refs mean missing branches. Full history must be available.
-node scripts/check-pr-policy.js --base main --head test --refs-from-inputs --test-ref test --staging-ref staging
-npm test
-```
+### Git guardrails
 
-The default graph CLI queries origin, fetches existing test/staging branches,
-and checks reachability. Remote errors fail rather than assuming branches are
-missing. The body CLI also accepts GITHUB_EVENT_PATH. These scripts require no
-installed dependencies.
-
-### Human override
-
-Direct commits and pushes to main, staging, and test are blocked by default.
-Only the human may explicitly authorize a direct **non-force** commit or push:
+By default, nobody can commit or push directly to `main`, `staging` or `test`. A person can allow one direct, non-force commit or push:
 
 ```sh
 QFL_ALLOW_PROTECTED_PUSH=1 git commit -m "..."
 QFL_ALLOW_PROTECTED_PUSH=1 git push origin main
 ```
 
-Husky honors this override; **Codex PreToolUse always ignores it**. It never
-authorizes force-push, deletion, or reset --hard of a protected branch.
-The pre-push hook checks ancestry and inspects the invoking Git process for
-explicit force flags (using ps where available). Codex blocks protected destructive
-commands before execution; Husky cannot intercept a standalone reset or branch
-deletion. Git hooks and Codex hooks are local guardrails, so also use server
-protection for remote enforcement. Co-Authored-By trailers are always rejected.
+- AI agents can't use this override: the Codex hook always ignores it.
+- Nothing allows force-pushing, deleting or hard-resetting a protected branch.
+- Commits with a `Co-Authored-By:` trailer are rejected.
 
-### Reusable CI and branch protection
+These hooks run on your machine. To enforce the same rules on the server, also set up branch protection (below).
 
-The installed caller uses:
+### CI workflows and branch protection
+
+The installed workflow calls reusable workflows from this repo:
 
 ```yaml
 name: PR policy
@@ -249,110 +234,131 @@ jobs:
     uses: panch8/quality-feedback-loop/.github/workflows/pr-body-policy.yml@main
 ```
 
-These reusable workflows accept optional base/head or body inputs, falling back
-to the caller's pull_request event. They check out the caller and the policy
-source separately, with read-only permissions, and run the policy source scripts
-against the caller. No npm install is needed. The policy checkout defaults to
-panch8/quality-feedback-loop at main; policy_repository and policy_ref inputs
-can select an available revision before release. This repository's own direct PR
-workflows use its current revision, so they also work before publication.
-The caller's .qfl/pr-format.json is honored. Pin the reusable workflow reference
-and policy_ref to matching immutable revisions when reproducibility is needed.
+The workflows run with read-only permissions and need no `npm install`. They use your repo's `.qfl/pr-format.json` if it exists. For reproducible builds, replace `@main` with a fixed tag or commit, and pass the same revision as `policy_ref`.
 
-The installed caller sets job `name`s to `PR branch graph` and
-`PR body (/pr format)` so they match the recommended required checks.
+To print the branch protection settings that make these checks required:
 
-`node scripts/apply-branch-protection.js --repo OWNER/REPO` **prints only**;
---dry-run is the default. It emits gh api commands for main, staging, and test
-that require those two checks, disable force pushes and deletions, and leave
-`enforce_admins` off so the human override can still push. GitHub cannot tell
-the human from an agent using the same account; Codex and Husky hooks are the
-agent hard-block. Reviews are not required, so a solo maintainer can merge.
-Fran approves these settings per repository. Review the printed commands and
-existing settings first; --apply is an explicit opt-in that replaces the
-branch protection configuration. The installer never applies settings,
-authenticates, publishes, or pushes.
+```sh
+node node_modules/@superpanch/quality-feedback-loop/scripts/apply-branch-protection.js --repo OWNER/REPO
+```
+
+It **only prints** `gh api` commands. Review them and your current settings first, then run them yourself, or pass `--apply`. Note that `--apply` replaces your existing branch protection. The settings require the two PR checks, block force-pushes and deletion, and don't require reviews, so a solo maintainer can still merge. Admins aren't included, so the override above keeps working.
+
+### Checking locally
+
+From a checkout of this package:
+
+```sh
+node scripts/check-pr-body.js --body-file pr-body.md
+node scripts/check-pr-policy.js --base staging --head feature/example
+npm test
+```
+
+---
 
 ## Versioning
 
-Build-assigned semantic versions. Nobody edits a version number by hand: the
-**PR title** (a conventional commit) decides the bump, the **pipeline** assigns
-the number and tags the commit it built, and the repo's `package.json` never
-gets a "bump version" commit.
+CI assigns version numbers. Nobody types a version and nobody commits a "bump version" change.
+
+- The **PR title** decides how big the change is.
+- The **pipeline** works out the next number and tags the commit it built.
+- `package.json` stays at a placeholder (`0.0.0-dev`). The real number is written into the build copy only.
+
+### How the PR title sets the version
+
+PR titles must follow [Conventional Commits](https://www.conventionalcommits.org):
+
+| PR title | Version change | Example |
+|---|---|---|
+| `feat: …` | minor | 1.4.2 → 1.5.0 |
+| `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, `perf:`, `ci:`, `build:`, `style:`, `revert:` | patch | 1.4.2 → 1.4.3 |
+| any type with `!`, like `feat(api)!: …` | major | 1.4.2 → 2.0.0 |
+| anything else | the PR check fails | |
+
+If several PRs land before a build, the largest change wins.
+
+### How a release flows
+
+```text
+feature PR into test            title check runs
+merge into test                 next version = latest tag + change from new PR titles
+                                build and deploy with that version
+                                tag the commit (v1.5.0), comment "Released as v1.5.0" on each PR
+promote test → staging → main   no new number: uses the latest tag it contains
+```
+
+Only the release branch (default `test`) creates new versions. `staging` and `main` reuse the version they received.
+
+### Setup
 
 ```sh
 npx q-feedback-init --versioning
-# Non-interactive, explicit choices:
-npx q-feedback-init --versioning --yes --host azure --release-branch test --helper ts
-# Together with the harness:
+# or without questions:
+npx q-feedback-init --versioning --yes --host github --release-branch test
+# together with the harness:
 npx q-feedback-init --harness --versioning
 ```
 
-| PR title | Bump |
+The setup detects GitHub or Azure DevOps from your `origin` remote. It asks for:
+
+- the release branch (default `test`)
+- an OpenAPI spec to stamp with the version, if you have one
+- whether to add a `getVersion()` helper for your app
+- whether to reset `package.json` to `0.0.0-dev`
+
+It writes `.qfl/versioning.json`, a section in `AGENTS.md`, and:
+
+| Host | Files |
 |---|---|
-| `feat: …` / `feat(scope): …` | minor |
-| `fix:` `chore:` `refactor:` `docs:` `test:` `perf:` `ci:` `build:` `style:` `revert:` | patch |
-| any type with `!` (`feat(api)!: …`) | major |
-| anything else | **PR check fails** (a direct build counts it as a patch and warns) |
+| GitHub | `.github/workflows/pr-title.yml` (title check) and `.github/workflows/release-version.yml` (computes the version, then tags after your deploy job) |
+| Azure DevOps | `.qfl/bin/` (a small CLI with no dependencies), `.azure-pipelines/pr-title-check.yaml`, and `.azure-pipelines/qfl-versioning.snippet.yaml` to merge into your pipeline |
 
-```text
-feature PR ──► PR title check fails untyped titles
-merge → test (release branch)
-  build   version = highest reachable v* tag + highest bump among first-parent PR merges since it
-  deploy  stamp the build copy of package.json / OpenAPI spec only
-  tag     git tag v<version> <built commit> && push (idempotent) + "Released as vX" on each PR
-test → staging / staging → main (inherit branches)
-  build   version = highest reachable v* tag, no bump, no new tag
-```
+It doesn't create tags, push, or change CI settings. It ends by printing the steps you have to do yourself:
 
-The wizard detects the host from `origin` (GitHub or Azure DevOps) and asks for
-the release branch (default `test`), an OpenAPI spec to stamp, an optional
-`getVersion()` runtime helper, and whether to set `package.json` to
-`0.0.0-dev`. It writes `.qfl/versioning.json`, an `AGENTS.md` section, and:
+1. **Create the first tag** on the release branch, e.g. `git tag -a v1.0.0 origin/test -m "Seed tag" && git push origin v1.0.0`. CI counts up from the highest tag.
+2. **Require the title check** (`PR title (conventional)`) in branch protection.
+3. **Allow merge commits only** on `main`, `staging` and `test`. On GitHub, `apply-branch-protection.js --versioning` prints a ruleset for this. On Azure, set *Limit merge types* to *Basic merge*.
+4. **Azure only:** give the Build Service permission to create tags and to contribute to pull requests.
 
-- **GitHub:** `.github/workflows/pr-title.yml` (calls the reusable
-  `pr-title-policy.yml`) and `.github/workflows/release-version.yml` (calls the
-  reusable `version-release.yml` to compute, then again with `tag: true` after
-  your deploy job).
-- **Azure DevOps:** a vendored zero-dependency CLI in `.qfl/bin/`,
-  `.azure-pipelines/pr-title-check.yaml`, and
-  `.azure-pipelines/qfl-versioning.snippet.yaml` to merge into your pipeline.
+> **Never squash-merge into a protected branch.** A squash creates a new commit that the release tag doesn't reach, so the next build can't find its version.
 
-It never creates tags, changes CI settings, or pushes. It prints the steps only
-you can do: seeding the first tag, Build Service permissions (Azure: Create tag,
-Contribute to pull requests), registering the title check as required, and
-**merge commits only** on `main`, `staging`, and `test`.
+Once `.qfl/versioning.json` exists, feature PRs may only target the release branch, so versions come from one place.
 
-With `.qfl/versioning.json` present, the branch-graph check only allows feature
-PRs into the release branch, so numbers come from exactly one place.
+### Common problems
 
-**Never squash into a protected branch.** On GitHub,
-`apply-branch-protection.js --versioning` prints a ruleset with
-`allowed_merge_methods: ["merge"]` and adds `PR title (conventional)` to the
-required checks. On Azure, set *Limit merge types* to *Basic merge* in each
-branch policy. A squashed promotion is a new commit no tag reaches.
+- **`No v* tag reachable from HEAD`.** The checkout is missing history or tags. Use `fetch-depth: 0` and fetch tags. Or there's no first tag yet (step 1 above).
+- **A publish job doesn't start after tagging.** Tags pushed with GitHub's built-in `GITHUB_TOKEN` don't trigger other workflows. Publish in the same workflow, or push the tag with a personal access token or GitHub App token.
+- **Re-running an old failed build** can deploy old code under a number that's already used. The tag step then fails, but only after the deploy.
+- **Reverting a PR** doesn't remove its tag. Delete the tag by hand if you need to.
+- **The `getVersion()` helper** (`version.ts`) uses `__dirname`, so it needs CommonJS output.
 
-### CLI
+### `qfl-version` CLI
+
+The workflows call this for you. You only need it for custom pipelines:
 
 ```sh
 qfl-version calculate [--mode=release|inherit] [--branch=NAME] [--spec=openapi.yml] [package.json …]
 qfl-version tag <version> <commit>
-qfl-version check-title [--title=TEXT] [--host=azure|github]   # exit 0 ok, 1 bad title, 2 could not read
+qfl-version check-title [--title=TEXT] [--host=azure|github]   # exit 0 ok, 1 bad title, 2 couldn't read
 qfl-version comment-released <vX.Y.Z> [--host=azure|github]   # best effort, always exits 0
 ```
 
-The mode comes from `.qfl/versioning.json` and the current branch
-(`BUILD_SOURCEBRANCH`, `GITHUB_REF_NAME`, or git). PR titles are read from Azure
-(`Merged PR 12: <title>`), GitHub merge commits (`Merge pull request #12 from …`
-plus the title line), and GitHub squash or "PR title" merges (`<title> (#12)`).
+`calculate` prints the version and, if given, writes it into the listed `package.json` files and the OpenAPI spec. Whether it bumps (`release`) or reuses the latest tag (`inherit`) depends on the current branch and `.qfl/versioning.json`. It reads PR titles from Azure, GitHub merge and GitHub squash merge commits.
 
-### Gotchas
+---
 
-- Checkouts need full history and tags (`fetch-depth: 0`, `fetchTags: true`),
-  or the build fails with `No v* tag reachable from HEAD`.
-- Tags pushed with `GITHUB_TOKEN` don't trigger other workflows (such as a
-  publish-on-tag job). Use a PAT or GitHub App token for that.
-- Re-running an old failed run can redeploy old code under a used number. The
-  tag step then fails, but after the deploy.
-- Reverting a PR doesn't remove its tag. Delete tags by hand if needed.
-- The `version.ts` helper uses `__dirname`, so it needs CommonJS output.
+## Releasing this package
+
+This repo versions itself with the flow above:
+
+1. Open a PR into `test` with a conventional title. Merge it with a merge commit. CI tags the next version.
+2. Open a PR from `test` into `main` and merge it with a merge commit. CI publishes that version to npm.
+
+The `NPM_TOKEN` secret must be an npm granular access token with write access to this package and "bypass two-factor authentication" turned on.
+
+---
+
+## Roadmap
+
+- **Done:** TypeScript/JS configs, the setup command, the harness, and versioning.
+- **Planned:** reusable CI workflows for other languages (Python with ruff and mypy) and a shared quality gate.
