@@ -1,11 +1,12 @@
 {
   "name": "@superpanch/quality-feedback-loop",
-  "version": "0.3.0",
+  "version": "0.0.0-dev",
   "description": "Shareable quality enforcement configs for TypeScript/React/Node projects",
   "license": "MIT",
   "main": "prettier/index.js",
   "bin": {
-    "q-feedback-init": "scripts/init.js"
+    "q-feedback-init": "scripts/init.js",
+    "qfl-version": "scripts/qfl-version.js"
   },
   "files": [
     "eslint/",

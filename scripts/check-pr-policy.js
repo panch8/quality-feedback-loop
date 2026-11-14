@@ -18,7 +18,8 @@ try {
       if (branch === "test") testRef = ref; else stagingRef = ref;
     }
   }
-  if (!checkGraph(base, head, { testExists: !!testRef, stagingExists: !!stagingRef })) throw new Error("PR branch graph rejected: " + head + " → " + base);
+  const versioning = fs.existsSync(".qfl/versioning.json") ? JSON.parse(fs.readFileSync(".qfl/versioning.json", "utf8")) : {};
+  if (!checkGraph(base, head, { testExists: !!testRef, stagingExists: !!stagingRef, releaseBranch: versioning.releaseBranch })) throw new Error("PR branch graph rejected: " + head + " → " + base + (versioning.releaseBranch ? " (versioning: feature PRs target " + versioning.releaseBranch + ")" : ""));
   if (!reachable(testRef, stagingRef)) throw new Error("test and staging have diverged");
   console.log("PR branch graph: passed");
 } catch (error) { console.error(error.message); process.exitCode = 1; }

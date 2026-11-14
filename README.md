@@ -272,3 +272,87 @@ Fran approves these settings per repository. Review the printed commands and
 existing settings first; --apply is an explicit opt-in that replaces the
 branch protection configuration. The installer never applies settings,
 authenticates, publishes, or pushes.
+
+## Versioning
+
+Build-assigned semantic versions. Nobody edits a version number by hand: the
+**PR title** (a conventional commit) decides the bump, the **pipeline** assigns
+the number and tags the commit it built, and the repo's `package.json` never
+gets a "bump version" commit.
+
+```sh
+npx q-feedback-init --versioning
+# Non-interactive, explicit choices:
+npx q-feedback-init --versioning --yes --host azure --release-branch test --helper ts
+# Together with the harness:
+npx q-feedback-init --harness --versioning
+```
+
+| PR title | Bump |
+|---|---|
+| `feat: …` / `feat(scope): …` | minor |
+| `fix:` `chore:` `refactor:` `docs:` `test:` `perf:` `ci:` `build:` `style:` `revert:` | patch |
+| any type with `!` (`feat(api)!: …`) | major |
+| anything else | **PR check fails** (a direct build counts it as a patch and warns) |
+
+```text
+feature PR ──► PR title check fails untyped titles
+merge → test (release branch)
+  build   version = highest reachable v* tag + highest bump among first-parent PR merges since it
+  deploy  stamp the build copy of package.json / OpenAPI spec only
+  tag     git tag v<version> <built commit> && push (idempotent) + "Released as vX" on each PR
+test → staging / staging → main (inherit branches)
+  build   version = highest reachable v* tag, no bump, no new tag
+```
+
+The wizard detects the host from `origin` (GitHub or Azure DevOps) and asks for
+the release branch (default `test`), an OpenAPI spec to stamp, an optional
+`getVersion()` runtime helper, and whether to set `package.json` to
+`0.0.0-dev`. It writes `.qfl/versioning.json`, an `AGENTS.md` section, and:
+
+- **GitHub:** `.github/workflows/pr-title.yml` (calls the reusable
+  `pr-title-policy.yml`) and `.github/workflows/release-version.yml` (calls the
+  reusable `version-release.yml` to compute, then again with `tag: true` after
+  your deploy job).
+- **Azure DevOps:** a vendored zero-dependency CLI in `.qfl/bin/`,
+  `.azure-pipelines/pr-title-check.yaml`, and
+  `.azure-pipelines/qfl-versioning.snippet.yaml` to merge into your pipeline.
+
+It never creates tags, changes CI settings, or pushes. It prints the steps only
+you can do: seeding the first tag, Build Service permissions (Azure: Create tag,
+Contribute to pull requests), registering the title check as required, and
+**merge commits only** on `main`, `staging`, and `test`.
+
+With `.qfl/versioning.json` present, the branch-graph check only allows feature
+PRs into the release branch, so numbers come from exactly one place.
+
+**Never squash into a protected branch.** On GitHub,
+`apply-branch-protection.js --versioning` prints a ruleset with
+`allowed_merge_methods: ["merge"]` and adds `PR title (conventional)` to the
+required checks. On Azure, set *Limit merge types* to *Basic merge* in each
+branch policy. A squashed promotion is a new commit no tag reaches.
+
+### CLI
+
+```sh
+qfl-version calculate [--mode=release|inherit] [--branch=NAME] [--spec=openapi.yml] [package.json …]
+qfl-version tag <version> <commit>
+qfl-version check-title [--title=TEXT] [--host=azure|github]   # exit 0 ok, 1 bad title, 2 could not read
+qfl-version comment-released <vX.Y.Z> [--host=azure|github]   # best effort, always exits 0
+```
+
+The mode comes from `.qfl/versioning.json` and the current branch
+(`BUILD_SOURCEBRANCH`, `GITHUB_REF_NAME`, or git). PR titles are read from Azure
+(`Merged PR 12: <title>`), GitHub merge commits (`Merge pull request #12 from …`
+plus the title line), and GitHub squash or "PR title" merges (`<title> (#12)`).
+
+### Gotchas
+
+- Checkouts need full history and tags (`fetch-depth: 0`, `fetchTags: true`),
+  or the build fails with `No v* tag reachable from HEAD`.
+- Tags pushed with `GITHUB_TOKEN` don't trigger other workflows (such as a
+  publish-on-tag job). Use a PAT or GitHub App token for that.
+- Re-running an old failed run can redeploy old code under a used number. The
+  tag step then fails, but after the deploy.
+- Reverting a PR doesn't remove its tag. Delete tags by hand if needed.
+- The `version.ts` helper uses `__dirname`, so it needs CommonJS output.

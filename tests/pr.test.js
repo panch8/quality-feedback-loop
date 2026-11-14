@@ -45,3 +45,11 @@ test("integration histories must be linear", () => {
     assert.equal(reachable("test", "staging", dir), false);
   } finally { fs.rmSync(dir, { recursive: true }); }
 });
+test("with versioning, feature PRs may only target the release branch", () => {
+  const options = { testExists: true, stagingExists: true, releaseBranch: "test" };
+  for (const [base, head, expected] of [["test", "feature/a", true], ["staging", "feature/a", false], ["main", "staging", true], ["main", "test", true], ["main", "feature/a", false]]) {
+    assert.equal(checkGraph(base, head, options), expected, head + " → " + base);
+  }
+  // A missing release branch must not lock feature work out of the integration branch that exists.
+  assert.equal(checkGraph("staging", "feature/a", { stagingExists: true, releaseBranch: "test" }), true);
+});

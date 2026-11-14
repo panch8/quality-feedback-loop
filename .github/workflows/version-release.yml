@@ -1,0 +1,67 @@
+# Reusable. Call once without `tag` to compute the version (output `version`),
+# deploy with it, then call again with `tag: true` on the release branch to push
+# v<version> on the built commit and comment "Released as v<version>" on its PRs.
+# The tag call needs `contents: write` and `pull-requests: write` from the caller.
+name: Version release
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: boolean
+        default: false
+      version:
+        type: string
+        default: ''
+      policy_repository:
+        type: string
+        default: panch8/quality-feedback-loop
+      policy_ref:
+        type: string
+        default: main
+    outputs:
+      version:
+        description: Version computed for this commit
+        value: ${{ jobs.version.outputs.version }}
+jobs:
+  version:
+    name: ${{ inputs.tag && 'Tag version' || 'Compute version' }}
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.calculate.outputs.version || inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: caller
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ endsWith(github.repository, '/quality-feedback-loop') && github.repository || inputs.policy_repository || 'panch8/quality-feedback-loop' }}
+          ref: ${{ endsWith(github.repository, '/quality-feedback-loop') && github.sha || inputs.policy_ref || 'main' }}
+          path: qfl-policy
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Compute version
+        id: calculate
+        if: ${{ !inputs.tag }}
+        working-directory: caller
+        run: |
+          VERSION=$(node ../qfl-policy/scripts/qfl-version.js calculate) || exit 1
+          echo "Version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Tag v${{ inputs.version }}
+        if: ${{ inputs.tag }}
+        working-directory: caller
+        env:
+          QFL_VERSION: ${{ inputs.version }}
+        run: node ../qfl-policy/scripts/qfl-version.js tag "$QFL_VERSION" "$GITHUB_SHA"
+      # Best effort: always exits 0, so a comment failure never fails the release.
+      - name: Comment released PRs
+        if: ${{ inputs.tag }}
+        working-directory: caller
+        env:
+          QFL_VERSION: ${{ inputs.version }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node ../qfl-policy/scripts/qfl-version.js comment-released "v$QFL_VERSION" --host=github

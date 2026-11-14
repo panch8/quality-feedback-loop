@@ -1,0 +1,22 @@
+# Run by a Build Validation branch policy (Azure Repos ignores YAML pr: triggers).
+# Reads the live PR title over REST, so retitling and re-queuing passes without a
+# new commit. Plain node, no install step. Installed by q-feedback-init --versioning.
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 1
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "22.x"
+    displayName: "Use Node.js"
+
+  - script: node .qfl/bin/qfl-version.js check-title --host=azure
+    displayName: "Check PR title"
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)

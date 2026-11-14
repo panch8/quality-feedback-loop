@@ -1,0 +1,31 @@
+# Build-assigned versioning (installed by q-feedback-init --versioning).
+# __RELEASE__ bumps from PR titles and gets tagged; __INHERIT__ report the highest reachable tag.
+name: Release version
+on:
+  push:
+    branches: [__BRANCHES__]
+permissions:
+  contents: read
+jobs:
+  version:
+    name: Compute version
+    uses: panch8/quality-feedback-loop/.github/workflows/version-release.yml@main
+
+  # Add your build/deploy here. Stamp the build copy only, never commit it:
+  #   npm pkg set version=${{ needs.version.outputs.version }}
+  # deploy:
+  #   needs: version
+  #   ...
+
+  tag:
+    name: Tag version
+    needs: [version] # add your deploy job: [version, deploy]
+    if: github.ref_name == '__RELEASE__'
+    uses: panch8/quality-feedback-loop/.github/workflows/version-release.yml@main
+    with:
+      tag: true
+      version: ${{ needs.version.outputs.version }}
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
