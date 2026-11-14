@@ -1,0 +1,71 @@
+# This repo consumes its own build-assigned versioning.
+#   push to test (release branch): compute version from PR titles, tag v<version>.
+#   push to main (inherit branch):  version = highest reachable tag, publish to npm.
+# package.json is stamped in the build copy only; the repo keeps 0.0.0-dev.
+name: Release
+on:
+  push:
+    branches: [test, main]
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  version:
+    name: Compute version
+    uses: ./.github/workflows/version-release.yml
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+
+  tag:
+    name: Tag version
+    needs: [version, test]
+    if: github.ref_name == 'test'
+    uses: ./.github/workflows/version-release.yml
+    with:
+      tag: true
+      version: ${{ needs.version.outputs.version }}
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+  publish:
+    name: Publish to npm
+    needs: [version, test]
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+          scope: "@superpanch"
+      # A push to main with no new tag (e.g. a hotfix revert) inherits an already published version.
+      - name: Check npm for v${{ env.VERSION }}
+        id: check
+        run: |
+          if npm view "@superpanch/quality-feedback-loop@$VERSION" version >/dev/null 2>&1; then
+            echo "$VERSION is already on npm; skipping publish."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Stamp package.json
+        if: steps.check.outputs.skip != 'true'
+        run: npm pkg set version="$VERSION"
+      - name: Publish
+        if: steps.check.outputs.skip != 'true'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
