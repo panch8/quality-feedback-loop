@@ -291,6 +291,8 @@ Only the release branch (default `test`) creates new versions. `staging` and `ma
 
 ### Setup
 
+With the package installed (`npm install --save-dev @superpanch/quality-feedback-loop`):
+
 ```sh
 npx q-feedback-init --versioning
 # or without questions:
@@ -299,12 +301,18 @@ npx q-feedback-init --versioning --yes --host github --release-branch test
 npx q-feedback-init --harness --versioning
 ```
 
+Without installing, tell `npx` which package the command comes from. The package has two commands, so plain `npx q-feedback-init` fails with `could not determine executable to run`:
+
+```sh
+npx -p @superpanch/quality-feedback-loop q-feedback-init --versioning
+```
+
 The setup detects GitHub or Azure DevOps from your `origin` remote. It asks for:
 
 - the release branch (default `test`)
 - an OpenAPI spec to stamp with the version, if you have one
 - whether to add a `getVersion()` helper for your app
-- whether to reset `package.json` to `0.0.0-dev`
+- whether to reset `package.json` to `0.0.0-dev`. With `--yes` it never does, so `package.json` keeps its current version. That's harmless, because CI overwrites the build copy anyway.
 
 It writes `.qfl/versioning.json`, a section in `AGENTS.md`, and:
 
@@ -315,7 +323,7 @@ It writes `.qfl/versioning.json`, a section in `AGENTS.md`, and:
 
 It doesn't create tags, push, or change CI settings. It ends by printing the steps you have to do yourself:
 
-1. **Create the first tag** on the release branch, e.g. `git tag -a v1.0.0 origin/test -m "Seed tag" && git push origin v1.0.0`. CI counts up from the highest tag.
+1. **Create the first tag** on the release branch, e.g. `git tag -a v1.0.0 origin/test -m "Seed tag" && git push origin v1.0.0`. CI counts up from the highest tag. The setup suggests a number based on your current `package.json` version. Push the tag before, or together with, the first push of the new workflow to `test`, `staging` or `main`. Otherwise that first run fails with `No v* tag reachable from HEAD`. That failure is harmless: the next push passes.
 2. **Require the title check** (`PR title (conventional)`) in branch protection.
 3. **Allow merge commits only** on `main`, `staging` and `test`. On GitHub, `apply-branch-protection.js --versioning` prints a ruleset for this. On Azure, set *Limit merge types* to *Basic merge*.
 4. **Azure only:** give the Build Service permission to create tags and to contribute to pull requests.
@@ -326,7 +334,8 @@ Once `.qfl/versioning.json` exists, feature PRs may only target the release bran
 
 ### Common problems
 
-- **`No v* tag reachable from HEAD`.** The checkout is missing history or tags. Use `fetch-depth: 0` and fetch tags. Or there's no first tag yet (step 1 above).
+- **`No v* tag reachable from HEAD`.** There's no first tag yet, or it was pushed after the run started (step 1 above). In a custom pipeline, the checkout may also be missing history or tags. Use `fetch-depth: 0` and fetch tags.
+- **`npx q-feedback-init` says `could not determine executable to run`.** The package isn't installed. Install it, or use `npx -p @superpanch/quality-feedback-loop q-feedback-init`.
 - **A publish job doesn't start after tagging.** Tags pushed with GitHub's built-in `GITHUB_TOKEN` don't trigger other workflows. Publish in the same workflow, or push the tag with a personal access token or GitHub App token.
 - **Re-running an old failed build** can deploy old code under a number that's already used. The tag step then fails, but only after the deploy.
 - **Reverting a PR** doesn't remove its tag. Delete the tag by hand if you need to.
