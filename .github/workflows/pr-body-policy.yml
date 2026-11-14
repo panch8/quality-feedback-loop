@@ -20,19 +20,19 @@ jobs:
     name: PR body (/pr format)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: caller
           fetch-depth: 0
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: ${{ endsWith(github.repository, '/quality-feedback-loop') && github.repository || inputs.policy_repository || 'panch8/quality-feedback-loop' }}
           ref: ${{ endsWith(github.repository, '/quality-feedback-loop') && github.sha || inputs.policy_ref || 'main' }}
           path: qfl-policy
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
       - name: Check /pr structure
         env:
           QFL_PR_BODY: ${{ inputs.body || github.event.pull_request.body }}

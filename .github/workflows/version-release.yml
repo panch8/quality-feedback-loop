@@ -29,20 +29,20 @@ jobs:
     outputs:
       version: ${{ steps.calculate.outputs.version || inputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: caller
           fetch-depth: 0
           fetch-tags: true
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: ${{ endsWith(github.repository, '/quality-feedback-loop') && github.repository || inputs.policy_repository || 'panch8/quality-feedback-loop' }}
           ref: ${{ endsWith(github.repository, '/quality-feedback-loop') && github.sha || inputs.policy_ref || 'main' }}
           path: qfl-policy
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
       - name: Compute version
         id: calculate
         if: ${{ !inputs.tag }}
