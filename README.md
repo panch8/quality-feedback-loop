@@ -1,14 +1,29 @@
 # @superpanch/quality-feedback-loop
 
-Shared quality setup for TypeScript, React and Node projects. Install it once and every repo gets:
+Guardrails for teams where AI agents commit alongside humans.
 
-- **Configs:** ESLint, Prettier, TypeScript and lint-staged, with a pre-commit hook.
-- **Harness** (optional): git guardrails, a PR branch policy and a PR description check.
-- **Versioning** (optional): version numbers assigned by CI from PR titles, never edited by hand.
+## Why this exists
+
+AI-native development adds entropy: more changes, more quickly, with more ways to drift. Engineers still have to keep that work on rails. Quality Feedback Loop packages those rails for teams where humans and AI coding agents share a repository.
+
+Give agents explicit working rules, require evidence of behavior before and after a change, and make merge risk visible. Keep a human accountable for the result. Shared lint and TypeScript configs support that workflow; the harness gives it structure.
+
+## The rails
+
+- **A working agreement in `AGENTS.md`.** Commit the rules agents follow, including protected branches and the required PR format.
+- **Git guardrails, including Codex hooks.** Approve the Codex hooks once with `/hooks`. They ignore the human-only `QFL_ALLOW_PROTECTED_PUSH=1` override, so it cannot authorize protected-branch operations through the Codex hook.
+- **Evidence before and after.** PR descriptions require **Before** and **After** labels so authors can explain the behavior changed and the evidence behind it.
+- **Merge Danger made explicit.** Every PR description declares a **Door** (`one-way` or `two-way`) and a **Blast Radius** so readers can assess reversibility and affected areas.
+- **Versioning from PR titles.** With versioning configured, CI derives version changes from Conventional Commit PR titles and writes the real version into the build copy.
+- **Shared quality checks.** ESLint, Prettier, TypeScript and lint-staged provide supporting checks for TypeScript, React and Node projects.
+
+Harness and versioning setup are explicit choices. The basic initializer installs project configs and a pre-commit hook; use the flags below to add the harness and versioning.
 
 ---
 
 ## Quick start
+
+### Set up the configs
 
 ```sh
 npm install --save-dev @superpanch/quality-feedback-loop husky
@@ -39,106 +54,21 @@ Initializing Husky…
 All done. Make a commit to see the hook fire.
 ```
 
----
+### Add the human/agent harness
 
-## What's inside
-
-| Entry point | What it does |
-|---|---|
-| `…/eslint/base` | Strict TypeScript rules, Prettier-compatible, no environment assumptions |
-| `…/eslint/react` | base + React Hooks + React Refresh |
-| `…/eslint/node` | base + Node globals |
-| `…/prettier` | Prettier config |
-| `…/tsconfig/base` | Strict TypeScript, no emit, no environment assumptions |
-| `…/tsconfig/app` | base + browser/bundler mode (Vite, React) |
-| `…/tsconfig/node` | base + Node16 module resolution |
-| `…/lint-staged/frontend` | Prettier + ESLint + `tsc` on staged TS files |
-| `…/lint-staged/backend` | Prettier + ESLint on staged TS files |
-
----
-
-## Install
-
-Install the package plus the peer dependencies your project uses:
+With the package installed, add the working agreement, git guardrails and PR policy:
 
 ```sh
-# All projects
-npm install --save-dev @superpanch/quality-feedback-loop \
-  eslint prettier typescript-eslint @eslint/js globals eslint-config-prettier
-
-# React projects also need
-npm install --save-dev eslint-plugin-react-hooks eslint-plugin-react-refresh
-
-# Pre-commit hooks
-npm install --save-dev husky
+npx q-feedback-init --harness
 ```
 
----
-
-## Manual config
-
-Skip `q-feedback-init` and wire things up yourself.
-
-### ESLint
-
-React (`eslint.config.mjs`):
-
-```js
-import react from "@superpanch/quality-feedback-loop/eslint/react";
-export default react;
-```
-
-Node (`eslint.config.mjs`):
-
-```js
-import node from "@superpanch/quality-feedback-loop/eslint/node";
-export default node;
-```
-
-### Prettier
-
-`.prettierrc`:
-
-```json
-"@superpanch/quality-feedback-loop/prettier"
-```
-
-Settings: `semi: true`, `singleQuote: false`, `tabWidth: 2`, `trailingComma: "all"`, `printWidth: 150`.
-
-### TypeScript
-
-React / Vite (`tsconfig.json`):
-
-```json
-{ "extends": "@superpanch/quality-feedback-loop/tsconfig/app" }
-```
-
-Node (`tsconfig.json`):
-
-```json
-{ "extends": "@superpanch/quality-feedback-loop/tsconfig/node" }
-```
-
-### lint-staged + Husky
-
-Set up the pre-commit hook once:
+To add versioning setup at the same time:
 
 ```sh
-npx husky init
-echo "npx lint-staged" > .husky/pre-commit
+npx q-feedback-init --harness --versioning
 ```
 
-Frontend. If `package.json` has `"type": "module"`, name the file `.lintstagedrc.cjs`:
-
-```js
-module.exports = require("@superpanch/quality-feedback-loop/lint-staged/frontend");
-```
-
-Backend or plain CommonJS (`.lintstagedrc.js`):
-
-```js
-module.exports = require("@superpanch/quality-feedback-loop/lint-staged/backend");
-```
+See [Harness](#harness) for hook approval and branch protection, and [Versioning](#versioning) for the remaining CI setup steps.
 
 ---
 
@@ -215,6 +145,10 @@ QFL_ALLOW_PROTECTED_PUSH=1 git push origin main
 - AI agents can't use this override: the Codex hook always ignores it.
 - Nothing allows force-pushing, deleting or hard-resetting a protected branch.
 - Commits with a `Co-Authored-By:` trailer are rejected.
+
+#### Why no Co-Authored-By?
+
+Agents are tools, not co-authors. You don't credit the calculator for your math; you sign the result. Every commit here carries one human signature, accountable for it. However much you trust your agents, even enough to skip a manual review, the signature stays yours.
 
 These hooks run on your machine. To enforce the same rules on the server, also set up branch protection (below).
 
@@ -353,6 +287,103 @@ qfl-version comment-released <vX.Y.Z> [--host=azure|github]   # best effort, alw
 ```
 
 `calculate` prints the version and, if given, writes it into the listed `package.json` files and the OpenAPI spec. Whether it bumps (`release`) or reuses the latest tag (`inherit`) depends on the current branch and `.qfl/versioning.json`. It reads PR titles from Azure, GitHub merge and GitHub squash merge commits.
+
+---
+
+## Shared quality configs
+
+| Entry point | What it does |
+|---|---|
+| `…/eslint/base` | Strict TypeScript rules, Prettier-compatible, no environment assumptions |
+| `…/eslint/react` | base + React Hooks + React Refresh |
+| `…/eslint/node` | base + Node globals |
+| `…/prettier` | Prettier config |
+| `…/tsconfig/base` | Strict TypeScript, no emit, no environment assumptions |
+| `…/tsconfig/app` | base + browser/bundler mode (Vite, React) |
+| `…/tsconfig/node` | base + Node16 module resolution |
+| `…/lint-staged/frontend` | Prettier + ESLint + `tsc` on staged TS files |
+| `…/lint-staged/backend` | Prettier + ESLint on staged TS files |
+
+### Install
+
+Install the package plus the peer dependencies your project uses:
+
+```sh
+# All projects
+npm install --save-dev @superpanch/quality-feedback-loop \
+  eslint prettier typescript-eslint @eslint/js globals eslint-config-prettier
+
+# React projects also need
+npm install --save-dev eslint-plugin-react-hooks eslint-plugin-react-refresh
+
+# Pre-commit hooks
+npm install --save-dev husky
+```
+
+### Manual config
+
+Skip `q-feedback-init` and wire things up yourself.
+
+#### ESLint
+
+React (`eslint.config.mjs`):
+
+```js
+import react from "@superpanch/quality-feedback-loop/eslint/react";
+export default react;
+```
+
+Node (`eslint.config.mjs`):
+
+```js
+import node from "@superpanch/quality-feedback-loop/eslint/node";
+export default node;
+```
+
+#### Prettier
+
+`.prettierrc`:
+
+```json
+"@superpanch/quality-feedback-loop/prettier"
+```
+
+Settings: `semi: true`, `singleQuote: false`, `tabWidth: 2`, `trailingComma: "all"`, `printWidth: 150`.
+
+#### TypeScript
+
+React / Vite (`tsconfig.json`):
+
+```json
+{ "extends": "@superpanch/quality-feedback-loop/tsconfig/app" }
+```
+
+Node (`tsconfig.json`):
+
+```json
+{ "extends": "@superpanch/quality-feedback-loop/tsconfig/node" }
+```
+
+#### lint-staged + Husky
+
+Set up the pre-commit hook once:
+
+```sh
+npx husky init
+echo "npx lint-staged" > .husky/pre-commit
+```
+
+Frontend. If `package.json` has `"type": "module"`, name the file `.lintstagedrc.cjs`:
+
+```js
+module.exports = require("@superpanch/quality-feedback-loop/lint-staged/frontend");
+```
+
+Backend or plain CommonJS (`.lintstagedrc.js`):
+
+```js
+module.exports = require("@superpanch/quality-feedback-loop/lint-staged/backend");
+```
 
 ---
 

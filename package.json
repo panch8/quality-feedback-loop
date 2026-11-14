@@ -1,7 +1,7 @@
 {
   "name": "@superpanch/quality-feedback-loop",
   "version": "0.0.0-dev",
-  "description": "Shareable quality enforcement configs for TypeScript/React/Node projects",
+  "description": "Guardrails for teams where AI agents commit alongside humans",
   "license": "MIT",
   "main": "prettier/index.js",
   "bin": {
