@@ -142,7 +142,7 @@ QFL_ALLOW_PROTECTED_PUSH=1 git commit -m "..."
 QFL_ALLOW_PROTECTED_PUSH=1 git push origin main
 ```
 
-- AI agents can't use this override: the Codex hook always ignores it.
+- Codex can't use this override: its hook checks each command before it runs and always ignores the variable (see [The override is not a lock](#the-override-is-not-a-lock)).
 - Nothing allows force-pushing, deleting or hard-resetting a protected branch.
 - Commits with a `Co-Authored-By:` trailer are rejected.
 
@@ -151,6 +151,23 @@ QFL_ALLOW_PROTECTED_PUSH=1 git push origin main
 Agents are tools, not co-authors. You don't credit the calculator for your math; you sign the result. Every commit here carries one human signature, accountable for it. However much you trust your agents, even enough to skip a manual review, the signature stays yours.
 
 These hooks run on your machine. To enforce the same rules on the server, also set up branch protection (below).
+
+#### The override is not a lock
+
+The guardrail doesn't detect who is typing. It only knows how it was called:
+
+| Called from | Mode | `QFL_ALLOW_PROTECTED_PUSH=1` |
+|---|---|---|
+| Codex `PreToolUse` hook (`--agent`) | agent | ignored |
+| Git hooks in `.husky/` | human | honored |
+
+So an agent without a pre-tool hook, a git call hidden inside a script, or `--no-verify` reaches only the git hooks or none at all, where the variable works like it does for a person. The override stops an agent from slipping onto a protected branch by accident. It doesn't stop one that sets the variable on purpose.
+
+The lock is on the server, and on the credentials an agent can reach:
+
+- Turn on branch protection (below), so protected branches only change through PRs that pass the checks.
+- Give agents a token or account without admin or bypass rights on protected branches. The branch protection settings exclude admins so the human override keeps working, which means an agent using an admin's credentials can bypass them too.
+- Keep your own credentials, such as an admin token or a signed-in `gh`, out of the agent's environment where you can.
 
 ### CI workflows and branch protection
 
