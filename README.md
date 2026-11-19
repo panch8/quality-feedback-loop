@@ -209,7 +209,8 @@ From a checkout of this package:
 
 ```sh
 node scripts/check-pr-body.js --body-file pr-body.md
-node scripts/check-pr-policy.js --base staging --head feature/example
+node scripts/check-pr-policy.js --base staging --head feature/example   # harness only
+node scripts/check-pr-policy.js --base test --head feature/example      # versioning, releaseBranch test
 npm test
 ```
 
@@ -244,9 +245,11 @@ merge into test                 next version = latest tag + change from new PR t
                                 build and deploy with that version
                                 tag the commit (v1.5.0), comment "Released as v1.5.0" on each PR
 promote test → staging → main   no new number: uses the latest tag it contains
+test → main (no staging)        same inherit path, only when staging is absent
 ```
 
 Only the release branch (default `test`) creates new versions. `staging` and `main` reuse the version they received.
+Direct `test` → `main` is allowed only when `staging` does not exist. Feature/fix PRs may not target `staging` or `main` while `test` is the release branch.
 
 ### Setup
 
