@@ -45,11 +45,17 @@ test("integration histories must be linear", () => {
     assert.equal(reachable("test", "staging", dir), false);
   } finally { fs.rmSync(dir, { recursive: true }); }
 });
-test("with versioning, feature PRs may only target the release branch", () => {
+test("with versioning on test, PRs follow the release promotion chain", () => {
   const options = { testExists: true, stagingExists: true, releaseBranch: "test" };
-  for (const [base, head, expected] of [["test", "feature/a", true], ["staging", "feature/a", false], ["main", "staging", true], ["main", "test", true], ["main", "feature/a", false]]) {
+  for (const [base, head, expected] of [["test", "feature/a", true], ["test", "fix/a", true], ["staging", "feature/a", false], ["staging", "fix/a", false], ["staging", "test", true], ["main", "staging", true], ["main", "test", false], ["main", "feature/a", false], ["main", "fix/a", false], ["test", "staging", false], ["test", "main", false], ["staging", "main", false]]) {
     assert.equal(checkGraph(base, head, options), expected, head + " → " + base);
   }
   // A missing release branch must not lock feature work out of the integration branch that exists.
   assert.equal(checkGraph("staging", "feature/a", { stagingExists: true, releaseBranch: "test" }), true);
+});
+test("with versioning on test, promotions go directly to main when staging is absent", () => {
+  const options = { testExists: true, stagingExists: false, releaseBranch: "test" };
+  for (const [base, head, expected] of [["test", "feature/a", true], ["staging", "feature/a", false], ["main", "feature/a", false], ["main", "test", true], ["staging", "test", false]]) {
+    assert.equal(checkGraph(base, head, options), expected, head + " → " + base);
+  }
 });

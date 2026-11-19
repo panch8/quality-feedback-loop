@@ -97,16 +97,24 @@ Your existing hooks are kept. If you have no hook manager, git is pointed at `.h
 
 ### Branch flow
 
-`main`, `staging` and `test` are protected. Work happens on other branches:
+`main`, `staging` and `test` are protected. With the harness alone (versioning off), work flows as follows:
 
 ```text
 feature/fix branch ──PR──► test or staging ──PR──► main
 ```
 
 - Feature and fix PRs go into `test` or `staging` first. After you've validated them there, promote that branch to `main` with a second PR.
-- Every other combination fails CI, including `test` → `staging`.
+- Every other combination fails CI when versioning is off, including `test` → `staging`.
 - If the repo has neither `test` nor `staging`, feature → `main` is allowed.
 - If both exist, one must contain the other's history. Diverged histories fail.
+
+With versioning on and `releaseBranch: "test"`, feature/fix PRs target `test`.
+Promote `test` → `staging` → `main` when `staging` exists; direct `test` → `main`
+is allowed only when `staging` is absent. All other combinations fail CI.
+If the configured release branch does not exist, feature/fix PRs may still target
+an existing integration branch (or `main` if neither integration branch exists).
+With `releaseBranch: "staging"`, feature/fix PRs target `staging` when it exists;
+the harness promotion rules above still apply.
 
 ### PR description
 
