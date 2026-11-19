@@ -5,9 +5,16 @@ Never append a Co-Authored-By trailer to any commit.
 Protected branches: main, staging, test. Agents must never commit or push directly
 to these branches. Agents may commit and push feature/fix branches freely.
 Never force-push, reset --hard, or delete a protected branch, under any circumstances.
-Develop on a feature/fix branch, PR into staging or test, validate, then promote
-that integration branch to main through a second PR. When test and staging both
-exist, one tip must be an ancestor of the other; never rewrite diverging histories.
+With versioning off, develop on a feature/fix branch, PR into staging or test,
+validate, then promote that integration branch to main through a second PR.
+With versioning on and releaseBranch set to test, feature/fix PRs target test;
+promote test → staging → main, or test → main only when staging is absent.
+If the release branch is missing, feature/fix PRs may target an existing integration
+branch. If neither integration branch exists, they may target main.
+With releaseBranch set to staging, feature/fix PRs target staging when it exists;
+the harness promotion rules for versioning off still apply.
+When test and staging both exist, one tip must be an ancestor of the other;
+never rewrite diverging histories.
 
 Only the human may use QFL_ALLOW_PROTECTED_PUSH=1 for a direct non-force commit
 or push to a protected branch. This cannot authorize force-push, reset --hard,
