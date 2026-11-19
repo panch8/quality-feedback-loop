@@ -8,6 +8,7 @@ function checkGraph(base, head, { testExists = false, stagingExists = false, rel
     if (releaseExists) return base === releaseBranch;
     return ["test", "staging"].includes(base) || (base === "main" && !testExists && !stagingExists);
   }
+  if (releaseBranch === "test" && head === "test" && stagingExists) return base === "staging";
   return ["test", "staging"].includes(head) && base === "main";
 }
 module.exports = { checkGraph, protectedBranches };
