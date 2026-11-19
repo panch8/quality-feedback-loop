@@ -249,7 +249,7 @@ test → main (no staging)        same inherit path, only when staging is absent
 ```
 
 Only the release branch (default `test`) creates new versions. `staging` and `main` reuse the version they received.
-Direct `test` → `main` is allowed only when `staging` does not exist. Feature/fix PRs may not target `staging` or `main` while `test` is the release branch.
+Direct `test` → `main` is allowed only when `staging` does not exist. While the configured `test` release branch exists, feature/fix PRs may not target `staging` or `main`. If that release branch is missing, they may still target an existing integration branch (or `main` if neither exists).
 
 ### Setup
 
